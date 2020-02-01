@@ -1,8 +1,12 @@
 package com.development.hoque.qrscannersimplesho;
 
 import android.Manifest;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -12,7 +16,10 @@ import android.util.DisplayMetrics;
 import android.util.SparseArray;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
@@ -28,6 +35,9 @@ public class Main extends AppCompatActivity {
     BarcodeDetector barcodeDetector;
     CameraSource cameraSource;
     final int RequestCamPermission = 1001;
+    String url;
+    Button btn_url, btn_copy;
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -58,6 +68,8 @@ public class Main extends AppCompatActivity {
         int width = displayMetrics.widthPixels;
         int height = displayMetrics.heightPixels;
         height = height/3;
+        btn_copy = (Button)findViewById(R.id.button_copy);
+        btn_url = (Button)findViewById(R.id.button_url);
 
         cameraPreview = (SurfaceView) findViewById(R.id.cameraPreview);
         text = (TextView) findViewById(R.id.text);
@@ -103,9 +115,38 @@ public class Main extends AppCompatActivity {
                     text.post(new Runnable() {
                         @Override
                         public void run() {
-                            Vibrator vibrator = (Vibrator)getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
-                            vibrator.vibrate(100);
-                            text.setText(qrcodes.valueAt(0).displayValue);
+                            url = qrcodes.valueAt(0).displayValue;
+
+
+                            text.setText(url);
+
+                            btn_url.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    Vibrator vibrator = (Vibrator)getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+                                    vibrator.vibrate(5);
+                                    if (!url.startsWith("http://") && !url.startsWith("https://"))
+                                        url = "http://" + url;
+                                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                                    startActivity(browserIntent);
+                                }
+                            });
+
+                            btn_copy.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    Vibrator vibrator = (Vibrator)getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+                                    vibrator.vibrate(5);
+                                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                    ClipData clip = ClipData.newPlainText(url, url);
+                                    clipboard.setPrimaryClip(clip);
+                                    Toast toast = Toast.makeText(getApplicationContext(), "Text copied to clipboard", Toast.LENGTH_SHORT);
+                                    toast.show();
+                                }
+                            });
+
+
+
                         }
                     });
                 }
